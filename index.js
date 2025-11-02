@@ -28,7 +28,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middlewares
 // CORS configuration - Allow requests from Vercel frontend
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
@@ -38,35 +38,27 @@ app.use(cors({
       'http://localhost:5173',
       'http://localhost:3000',
       'http://localhost:5174',
-      // Add your Vercel frontend URL here after deployment
-      /^https:\/\/.*\.vercel\.app$/,  // Allow all Vercel preview deployments
-      /^https:\/\/.*\.vercel\.app\/$/, // Allow Vercel production
     ];
     
-    // Check if origin matches allowed patterns
-    if (allowedOrigins.some(pattern => {
-      if (pattern instanceof RegExp) {
-        return pattern.test(origin);
-      }
-      return pattern === origin;
-    })) {
-      callback(null, true);
-    } else {
-      // For development, allow all origins
-      if (process.env.NODE_ENV !== 'production') {
-        callback(null, true);
-      } else {
-        callback(null, true); // Allow all for now, restrict later
-      }
+    // Check if origin matches exact strings
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
+    
+    // Check if origin is a Vercel domain (using string check instead of regex)
+    if (origin.includes('.vercel.app')) {
+      return callback(null, true);
+    }
+    
+    // For development/production, allow all origins for now
+    callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-}));
+};
 
-// Handle preflight requests
-app.options('*', cors());
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
