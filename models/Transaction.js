@@ -28,6 +28,7 @@ const TransactionSchema = new mongoose.Schema(
         "Travel", 
         "Shopping", 
         "Savings", 
+        "Income",
         "Others", 
         "Utilities"
       ], 
