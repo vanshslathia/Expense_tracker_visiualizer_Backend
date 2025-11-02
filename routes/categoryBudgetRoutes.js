@@ -9,9 +9,14 @@ router.get("/", authMiddleware, getCategoryGoals);
 // 🔔 Get Budget Alerts - Check spending against goals
 router.get("/alerts", authMiddleware, async (req, res) => {
   try {
+    console.log("📢 Budget alerts route called");
     const Transaction = require("../models/Transaction");
     const CategoryBudgetGoal = require("../models/CategoryBudgetGoal");
     const mongoose = require("mongoose");
+    
+    if (!req.user) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
     
     const userId = new mongoose.Types.ObjectId(req.user);
     
@@ -68,13 +73,19 @@ router.get("/alerts", authMiddleware, async (req, res) => {
       }
     });
     
+    console.log(`✅ Budget alerts retrieved: ${alerts.length} alerts`);
     res.json({
+      success: true,
       alerts,
       hasAlerts: alerts.length > 0
     });
   } catch (error) {
-    console.error("Budget alerts error:", error);
-    res.status(500).json({ message: "Error fetching budget alerts", error: error.message });
+    console.error("❌ Budget alerts error:", error);
+    res.status(500).json({ 
+      success: false,
+      message: "Error fetching budget alerts", 
+      error: error.message 
+    });
   }
 });
 

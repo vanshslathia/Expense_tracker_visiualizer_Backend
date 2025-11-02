@@ -55,8 +55,48 @@ app.use("/api/v1/debts", require("./routes/debts"));
 app.use("/api/v1/summary", require("./routes/summary"));     
 app.use("/api/v1/reminders", require("./routes/reminders"));
 
+// 404 Handler for unmatched routes
+app.use((req, res, next) => {
+  console.log(`⚠️ Route not found: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({ 
+    success: false,
+    message: `Route not found: ${req.method} ${req.originalUrl}`,
+    availableRoutes: [
+      "/api/ai/analyze/:userId",
+      "/api/ai/trend-insights/:userId",
+      "/api/ai/chat/:userId",
+      "/api/v1/category-goals/alerts",
+      "/api/v1/category-goals",
+      "/api/v1/auth/login",
+      "/api/v1/transactions",
+      "/api/v1/budgets",
+      "/api/v1/debts",
+      "/api/v1/summary",
+      "/api/v1/reminders"
+    ]
+  });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error("❌ Server Error:", err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal server error",
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
 
 // Start Server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log("📋 Registered routes:");
+  console.log("   - /api/ai/*");
+  console.log("   - /api/v1/category-goals/alerts");
+  console.log("   - /api/v1/auth/*");
+  console.log("   - /api/v1/transactions/*");
+  console.log("   - /api/v1/budgets/*");
+  console.log("   - /api/v1/debts/*");
+  console.log("   - /api/v1/summary/*");
+  console.log("   - /api/v1/reminders/*");
 });

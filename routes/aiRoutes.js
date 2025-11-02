@@ -459,10 +459,28 @@ router.post("/chat/:userId", async (req, res) => {
 // 📊 Get Smart Trend Insights for Dashboard
 router.get("/trend-insights/:userId", async (req, res) => {
   try {
+    console.log("📢 AI trend-insights route called for userId:", req.params.userId);
     const { userId } = req.params;
 
     if (!userId) {
-      return res.status(400).json({ message: "User ID is required." });
+      return res.status(400).json({ 
+        success: false,
+        message: "User ID is required." 
+      });
+    }
+
+    // Convert userId to ObjectId if it's a string
+    const mongoose = require("mongoose");
+    let userIdObjectId;
+    try {
+      userIdObjectId = mongoose.Types.ObjectId.isValid(userId) 
+        ? new mongoose.Types.ObjectId(userId) 
+        : userId;
+    } catch (err) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Invalid user ID format." 
+      });
     }
 
     // Get current month transactions
@@ -472,12 +490,12 @@ router.get("/trend-insights/:userId", async (req, res) => {
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
     const currentMonthTransactions = await Transaction.find({
-      userId,
+      userId: userIdObjectId,
       date: { $gte: startOfCurrentMonth }
     });
 
     const lastMonthTransactions = await Transaction.find({
-      userId,
+      userId: userIdObjectId,
       date: { $gte: startOfLastMonth, $lte: endOfLastMonth }
     });
 
@@ -597,7 +615,9 @@ router.get("/trend-insights/:userId", async (req, res) => {
       summary += `. Great work tracking your expenses! 💪`;
     }
 
+    console.log("✅ AI trend-insights retrieved successfully");
     res.json({
+      success: true,
       summary: summary,
       spendingChange: spendingChangeText,
       topCategory: topCategory || "N/A",
@@ -611,8 +631,9 @@ router.get("/trend-insights/:userId", async (req, res) => {
       percentageChange: percentageChange.toFixed(1)
     });
   } catch (error) {
-    console.error("Trend insights error:", error);
+    console.error("❌ Trend insights error:", error);
     res.status(500).json({ 
+      success: false,
       message: error.message || "Error fetching trend insights. Please try again later." 
     });
   }
