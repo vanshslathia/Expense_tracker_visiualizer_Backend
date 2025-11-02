@@ -27,8 +27,49 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middlewares
-app.use(cors());
+// CORS configuration - Allow requests from Vercel frontend
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // List of allowed origins
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://localhost:5174',
+      // Add your Vercel frontend URL here after deployment
+      /^https:\/\/.*\.vercel\.app$/,  // Allow all Vercel preview deployments
+      /^https:\/\/.*\.vercel\.app\/$/, // Allow Vercel production
+    ];
+    
+    // Check if origin matches allowed patterns
+    if (allowedOrigins.some(pattern => {
+      if (pattern instanceof RegExp) {
+        return pattern.test(origin);
+      }
+      return pattern === origin;
+    })) {
+      callback(null, true);
+    } else {
+      // For development, allow all origins
+      if (process.env.NODE_ENV !== 'production') {
+        callback(null, true);
+      } else {
+        callback(null, true); // Allow all for now, restrict later
+      }
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+}));
+
+// Handle preflight requests
+app.options('*', cors());
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Test Route
 app.get("/", (req, res) => {
@@ -106,6 +147,15 @@ mongoose.connection.on('error', (err) => {
 
 mongoose.connection.on('disconnected', () => {
   console.warn("⚠️ MongoDB disconnected. Attempting to reconnect...");
+});
+
+// Request logging middleware (for debugging)
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.originalUrl}`);
+  if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
+    console.log(`📦 Body:`, req.body);
+  }
+  next();
 });
 
 // API Routes
