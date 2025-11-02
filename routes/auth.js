@@ -23,20 +23,86 @@ const loginLimiter = rateLimit({
 
 router.post("/signup", async (req, res) => {
     try {
+        console.log("📢 Signup request received:", { name: req.body.name, email: req.body.email });
+        
         const { name, email, password } = req.body;
-        if (!name || !email || !password) return res.status(400).json({ msg: "Please provide all required fields." });
+        
+        // Validate input
+        if (!name || !email || !password) {
+            return res.status(400).json({ 
+                success: false,
+                msg: "Please provide all required fields: name, email, and password." 
+            });
+        }
 
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ 
+                success: false,
+                msg: "Please provide a valid email address." 
+            });
+        }
+
+        // Validate password length
+        if (password.length < 6) {
+            return res.status(400).json({ 
+                success: false,
+                msg: "Password must be at least 6 characters long." 
+            });
+        }
+
+        // Check if user already exists
         let user = await User.findOne({ email });
-        if (user) return res.status(400).json({ msg: "User already exists" });
+        if (user) {
+            return res.status(400).json({ 
+                success: false,
+                msg: "User already exists with this email." 
+            });
+        }
 
+        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
-        user = new User({ name, email, password: hashedPassword });
+        
+        // Create new user
+        user = new User({ 
+            name: name.trim(),
+            email: email.toLowerCase().trim(), 
+            password: hashedPassword 
+        });
+        
         await user.save();
+        
+        console.log("✅ User registered successfully:", user.email);
 
-        res.status(201).json({ msg: "User registered successfully!" });
+        res.status(201).json({ 
+            success: true,
+            msg: "User registered successfully!" 
+        });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ msg: "Server Error" });
+        console.error("❌ Signup error:", err);
+        
+        // Handle specific MongoDB errors
+        if (err.code === 11000) {
+            return res.status(400).json({ 
+                success: false,
+                msg: "User already exists with this email." 
+            });
+        }
+        
+        if (err.name === 'ValidationError') {
+            const errorMessages = Object.values(err.errors).map(e => e.message).join(', ');
+            return res.status(400).json({ 
+                success: false,
+                msg: `Validation error: ${errorMessages}` 
+            });
+        }
+
+        res.status(500).json({ 
+            success: false,
+            msg: err.message || "Server Error. Please try again later.",
+            ...(process.env.NODE_ENV === 'development' && { error: err.toString() })
+        });
     }
 });
 

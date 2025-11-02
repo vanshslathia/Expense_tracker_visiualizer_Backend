@@ -4,9 +4,8 @@ const { setCategoryGoal, getCategoryGoals } = require("../controllers/categoryBu
 const authMiddleware = require("../middleware/auth");
 
 router.post("/set", authMiddleware, setCategoryGoal);
-router.get("/", authMiddleware, getCategoryGoals);
 
-// 🔔 Get Budget Alerts - Check spending against goals
+// 🔔 Get Budget Alerts - Check spending against goals (MUST be before "/" route)
 router.get("/alerts", authMiddleware, async (req, res) => {
   try {
     console.log("📢 Budget alerts route called");
@@ -88,5 +87,8 @@ router.get("/alerts", authMiddleware, async (req, res) => {
     });
   }
 });
+
+// Get category goals (must be last to avoid matching other routes)
+router.get("/", authMiddleware, getCategoryGoals);
 
 module.exports = router;

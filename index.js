@@ -36,14 +36,47 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/v1", (req, res) => {
-  res.send("Backend is running!");
+  res.json({ 
+    message: "Backend is running!",
+    status: "ok",
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.json({ 
+    status: "ok",
+    message: "Server is healthy",
+    routes: {
+      ai: "/api/ai/trend-insights/:userId",
+      alerts: "/api/v1/category-goals/alerts",
+      categoryGoals: "/api/v1/category-goals"
+    }
+  });
 });
 
 // MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB error:", err));
+  .then(() => {
+    console.log("✅ MongoDB connected successfully");
+    console.log("📊 Database:", mongoose.connection.name);
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+    console.error("💡 Please check your MONGO_URI in .env file");
+    process.exit(1); // Exit if MongoDB connection fails
+  });
+
+// Handle MongoDB connection events
+mongoose.connection.on('error', (err) => {
+  console.error("❌ MongoDB connection error:", err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.warn("⚠️ MongoDB disconnected. Attempting to reconnect...");
+});
 
 // API Routes
 app.use("/api/ai", aiRoutes);
