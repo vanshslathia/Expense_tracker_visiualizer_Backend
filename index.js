@@ -57,16 +57,46 @@ app.get("/health", (req, res) => {
 });
 
 // MongoDB Connection
+// Validate MONGO_URI format before attempting connection
+const MONGO_URI = process.env.MONGO_URI;
+
+if (!MONGO_URI) {
+  console.error("❌ ERROR: MONGO_URI is not set!");
+  process.exit(1);
+}
+
+if (!MONGO_URI.startsWith('mongodb://') && !MONGO_URI.startsWith('mongodb+srv://')) {
+  console.error("❌ ERROR: MONGO_URI must start with 'mongodb://' or 'mongodb+srv://'");
+  console.error("   Current value starts with:", MONGO_URI.substring(0, 20) + "...");
+  process.exit(1);
+}
+
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(MONGO_URI, {
+    // Add connection options for better reliability
+    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+    socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+  })
   .then(() => {
     console.log("✅ MongoDB connected successfully");
     console.log("📊 Database:", mongoose.connection.name);
+    console.log("🔗 Host:", mongoose.connection.host);
   })
   .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
-    console.error("💡 Please check your MONGO_URI in .env file");
-    process.exit(1); // Exit if MongoDB connection fails
+    console.error("❌ MongoDB connection error:", err.message);
+    if (err.message.includes('Invalid scheme')) {
+      console.error("💡 Your MONGO_URI format is incorrect!");
+      console.error("   It should start with: mongodb:// or mongodb+srv://");
+      console.error("   Example: mongodb+srv://user:pass@cluster.mongodb.net/dbname");
+    } else if (err.message.includes('authentication')) {
+      console.error("💡 Check your MongoDB username and password");
+    } else if (err.message.includes('timeout')) {
+      console.error("💡 Check your MongoDB connection string and network");
+    } else {
+      console.error("💡 Please verify your MONGO_URI in environment variables");
+    }
+    // Don't exit - let server start so health check works, but operations will fail
+    console.warn("⚠️  Server will start but database operations will fail until MongoDB connects");
   });
 
 // Handle MongoDB connection events
@@ -120,16 +150,44 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log("📋 Registered routes:");
-  console.log("   - /api/ai/*");
-  console.log("   - /api/v1/category-goals/alerts");
-  console.log("   - /api/v1/auth/*");
-  console.log("   - /api/v1/transactions/*");
-  console.log("   - /api/v1/budgets/*");
-  console.log("   - /api/v1/debts/*");
-  console.log("   - /api/v1/summary/*");
-  console.log("   - /api/v1/reminders/*");
-});
+// Export app for Vercel serverless functions
+// For Vercel, we need to export the app directly
+// For local development, start the server normally
+if (require.main === module) {
+  // Running locally - start the server
+  const startServer = () => {
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log("📋 Registered routes:");
+      console.log("   ✅ GET  /health");
+      console.log("   ✅ GET  /api/v1");
+      console.log("   ✅ POST /api/v1/auth/signup");
+      console.log("   ✅ POST /api/v1/auth/login");
+      console.log("   ✅ GET  /api/v1/category-goals/alerts");
+      console.log("   ✅ GET  /api/ai/trend-insights/:userId");
+      console.log("   ✅ GET  /api/ai/analyze/:userId");
+      console.log("   ✅ POST /api/ai/chat/:userId");
+      console.log("   ✅ GET  /api/v1/transactions");
+      console.log("   ✅ GET  /api/v1/budgets");
+      console.log("   ✅ GET  /api/v1/debts");
+      console.log("   ✅ GET  /api/v1/summary");
+      console.log("   ✅ GET  /api/v1/reminders");
+      console.log("\n💡 Server is ready to accept requests!");
+      
+      // Log MongoDB connection status
+      if (mongoose.connection.readyState === 1) {
+        console.log("✅ MongoDB: Connected");
+      } else if (mongoose.connection.readyState === 2) {
+        console.log("🟡 MongoDB: Connecting...");
+      } else {
+        console.log("⚠️  MongoDB: Not connected (check MONGO_URI)");
+      }
+    });
+  };
+
+  startServer();
+}
+
+// Export for Vercel serverless
+module.exports = app;
