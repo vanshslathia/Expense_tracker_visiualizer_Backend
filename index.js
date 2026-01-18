@@ -115,6 +115,13 @@ mongoose
     console.log("✅ MongoDB connected successfully");
     console.log("📊 Database:", mongoose.connection.name);
     console.log("🔗 Host:", mongoose.connection.host);
+
+    // Start scheduled jobs after MongoDB connection
+    if (require.main === module) {
+      const recurringJob = require("./jobs/recurringJob");
+
+      recurringJob.startRecurringTransactionJob();
+    }
   })
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err.message);
@@ -160,6 +167,9 @@ app.use("/api/v1/category-goals", require("./routes/categoryBudgetRoutes"));
 app.use("/api/v1/debts", require("./routes/debts"));
 app.use("/api/v1/summary", require("./routes/summary"));     
 app.use("/api/v1/reminders", require("./routes/reminders"));
+// New feature routes
+app.use("/api/v1/recurring", require("./routes/recurringRoutes"));
+app.use("/api/v1/health", require("./routes/healthRoutes"));
 
 // 404 Handler for unmatched routes
 app.use((req, res, next) => {
@@ -175,6 +185,7 @@ app.use((req, res, next) => {
       "/api/v1/category-goals",
       "/api/v1/auth/login",
       "/api/v1/transactions",
+      "/api/v1/transactions/export",
       "/api/v1/budgets",
       "/api/v1/debts",
       "/api/v1/summary",
@@ -216,6 +227,8 @@ if (require.main === module) {
       console.log("   ✅ GET  /api/v1/debts");
       console.log("   ✅ GET  /api/v1/summary");
       console.log("   ✅ GET  /api/v1/reminders");
+      console.log("   ✅ GET  /api/v1/recurring");
+      console.log("   ✅ GET  /api/v1/health/score");
       console.log("\n💡 Server is ready to accept requests!");
       
       // Log MongoDB connection status

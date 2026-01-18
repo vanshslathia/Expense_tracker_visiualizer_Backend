@@ -12,6 +12,8 @@
   "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "chart.js": "^3.9.1",
+    "chartjs-node-canvas": "^4.1.6",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^5.1.0",
@@ -19,7 +21,11 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.2",
     "node-cache": "^5.1.2",
-    "openai": "^6.7.0"
+    "node-cron": "^4.2.1",
+    "nodemailer": "^7.0.12",
+    "openai": "^6.7.0",
+    "pdfkit": "^0.15.0",
+    "pptxgenjs": "^4.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

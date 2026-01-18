@@ -12,6 +12,9 @@ router.get("/", authMiddleware, transactionController.getTransactions);
 // Get transactions by user ID (protected)
 router.get("/user", authMiddleware, transactionController.getTransactions);  // get transactions for logged-in user
 
+// Export transactions (protected)
+router.get("/export", authMiddleware, transactionController.exportTransactions);
+
 
 // Get transaction summary by user ID (protected)
 router.get("/summary", authMiddleware, transactionController.getTransactionSummary);  // Use req.user for logged-in user's summary
