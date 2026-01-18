@@ -87,7 +87,6 @@ Ask natural language questions like:
 
 ## 📂 Project Structure
 
-expense_tracker_visualizer_backend/
 ├── controllers/ # Business logic
 ├── middleware/ # Authentication & security
 ├── models/ # MongoDB schemas
@@ -101,21 +100,18 @@ expense_tracker_visualizer_backend/
 ## ▶️ Run Locally
 
 npm install
+
 npm start
 
 🌍 API Base URLs
 
 🚀 Production
+
 https://expense-tracker-visiualizer-backend.vercel.app/
 
 🧪 Local
+
 http://localhost:5000/
-
-🎓 Project Classification
-
-🎓 Final Year Major Project
-
-💼 Resume / Portfolio Project
 
 🚀 Industry-level MERN + AI Application
 
