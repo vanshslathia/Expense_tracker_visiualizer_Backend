@@ -88,12 +88,19 @@ Ask natural language questions like:
 ## 📂 Project Structure
 
 ├── controllers/ # Business logic
+
 ├── middleware/ # Authentication & security
+
 ├── models/ # MongoDB schemas
+
 ├── routes/ # REST APIs
+
 ├── index.js # Application entry point
+
 ├── vercel.json # Vercel deployment config
+
 ├── .env.example # Environment variables
+
 └── package.json
 
 
